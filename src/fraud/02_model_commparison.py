@@ -2,6 +2,7 @@
 
 import h2o
 from h2o.estimators import H2ORandomForestEstimator
+from h2o.grid.grid_search import H2OGridSearch
 
 # connect to h2o
 h2o.init()
@@ -28,6 +29,17 @@ train[y] = train[y].asfactor()
 valid[y] = valid[y].asfactor()
 
 # random forest
-model = H2ORandomForestEstimator(ntrees=100, max_depth=20, nfolds=5)
-model.train(x=x, y=y, training_frame=train, validation_frame=valid)
-# see localhost:54321 for validation metrics
+hyper_params = {'ntrees': [10, 20],
+                'max_depth': [10, 20]}
+search_criteria = {'strategy': 'RandomDiscrete',
+                   'max_models': 36,
+                   'seed': 1}
+
+model = H2OGridSearch(model=H2ORandomForestEstimator,
+                      hyper_params=hyper_params,
+                      search_criteria=search_criteria)
+model.train(x=x, y=y, training_frame=train, validation_frame=valid,
+            nfolds=5)
+
+# compare models
+model.get_grid(sort_by='f1', decreasing=True)
